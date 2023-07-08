@@ -5,20 +5,39 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, WebDriverException
 from urllib.parse import unquote
 import pymysql
 import time
 import re
 
+
 class spider:
     pageNum = 0
     def __init__(self):
         self.data_list = []
-        self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
-        self.wait = WebDriverWait(self.driver, 50)
+        try:
+            self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+            self.wait = WebDriverWait(self.driver, 50)
+        except WebDriverException:
+            errorMsg = """
+            Cannot found chrome.exe or ChromeDriver in ~\\AppData\\Local\\Google\\Chrome\\Application\\ 
+            Please download chrome and the ChromeDriver in https://chromedriver.storage.googleapis.com/index.html?path=108.0.5359.71/
+            """
+            raise WebDriverException(f'[Runtime error]{time.asctime()} : {errorMsg}') from None
+        # except TypeError as e:
+        #     raise TypeError(f"[Runtime error]{time.asctime()}: Found a TypeEorror: {e}")
+        
+    def __del__(self):
+        try:
+            self.driver.quit()
+            del self.data_list
+            del self.driver
+            del self.wait
+        except Exception as e:
+            raise Exception(f'{e}') from None
     
-    def set_wait_Time(self, wait_time):
+    def set_wait_Time(self, wait_time : int) -> None:
         """设置界面最长等待时间
         
         Args:
@@ -26,18 +45,18 @@ class spider:
         """
         self.wait = WebDriverWait(self.driver, wait_time)
     
-    def search(self, keywords):
+    def search(self, keywords : str, zone_code : str) -> None:
         """
         Args:
             keywords (string): 商品关键词
         """
         self.driver.get('https://www.amazon.com/')
-        self.change_address('20001')
+        self.change_address(zone_code)
         inputtag = self.driver.find_element(By.ID,'twotabsearchtextbox')
         inputtag.send_keys(keywords)
         inputtag.send_keys(Keys.ENTER)
 
-    def change_address(self, postal):
+    def change_address(self, postal : str) -> None:
         """
         Args:
             postal (string): 地址代号
@@ -76,7 +95,7 @@ class spider:
         self.driver.refresh()
         time.sleep(3)
 
-    def get_data(self):
+    def get_data(self) -> list:
         """获取商品信息
 
         Returns:
@@ -132,7 +151,8 @@ class spider:
         
         return self.data_list
         
-    def commit_data(self, data_lists):
+    def commit_data(self, data_lists : list) -> None:
+        #To be re refactored
         connection = pymysql.connect(host='localhost',
                                     user='root',
                                     password='123456',
@@ -159,9 +179,11 @@ class spider:
         connection.close()
 
 if __name__ == '__main__':
+    key:str = "bear glasses"
+    zone_code:str = "20001"
+    
     crawler = spider()
     crawler.pageNum = 1
-    crawler.search("bear glasses")
+    crawler.search(key, zone_code)
     crawler.get_data()
-    crawler.driver.quit()
     # crawler.commit_data(crawler.data_list)
