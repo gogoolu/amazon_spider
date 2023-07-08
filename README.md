@@ -5,17 +5,9 @@
 
 ## 安装 install
 
-###### 命令行输入以下指令：
-
-` git clone git@github.com:gogoolu/amazon_spider.git`
-
-` pip install -r requirements.txt`
-
-
+` pip install . `
 
 ## 使用 usage
-
-###### 命令行输入以下指令：
 
 ` python spider.py`
 
