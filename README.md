@@ -23,5 +23,6 @@
 
 ###### 命令行输入以下指令：
 
-` python spider.py`
+` python3 spider.py`
 
+(注意：请务必使用python3解释器，否则会导致`pymysql`模块无法导入)
